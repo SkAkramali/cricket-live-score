@@ -7,4 +7,10 @@ app.listen(80, (req, res) =>{
 
 const userRouter = require("./routes/teams");
 
+const loginInfo = require("./routes/login");
+
 app.use("/ipl", userRouter);
+
+app.use("/login", loginInfo);
+
+
