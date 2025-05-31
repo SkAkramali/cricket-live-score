@@ -1,20 +1,26 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../database");
-const bcrypt = require("bcrypt")
+const bcrypt = require("bcrypt");
+const {validatePassword, getLoginInfo} = require("../handlers/aouthHandlers")
 
-router.post("/login", async(req, res) => {
+
+router.post("/signin", async(req, res) => {
   try{
     const loginInformation = req.body;
-    const data = await db.execute("select * from logininfo where email = ?", [loginInformation.email]);
-    const result = await bcrypt.compare(loginInformation.password, data.password)
+    const [data] = await getLoginInfo(loginInformation);
+    if (data.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const result = await validatePassword(loginInformation, data);
     if (result) {
       res.status(200).json({
         message: "authenticated"
       })
     } else {
-      res.status(500).json({
-        message: "passwored not machted"
+      res.status(401).json({
+        message: "Password Not Matched"
       })
     }
 
@@ -23,7 +29,7 @@ router.post("/login", async(req, res) => {
       error:err.message
     })
   }
-})
+});
 
 router.post("/", async(req, res)=> {
   try{
