@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 
-router.post("/", async(req, res)=> {
-  const data =  await req.body;
+router.post("/", (req, res)=> {
+  const data = req.body;
   console.log(data);
 });
 
