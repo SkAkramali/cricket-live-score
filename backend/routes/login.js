@@ -5,14 +5,22 @@ const bcrypt = require("bcrypt");
 const {validatePassword, getLoginInfo} = require("../handlers/aouthHandlers")
 
 
-router.post("/signin", async(req, res) => {
+
+const validateLogin = (req, res, next) => { // middleware for checking data is given by the user or not
+  const data = req.body;
+  if(!data.password || !data.email) {
+    return res.status(400).json({error:"username and password are required"});
+  }
+  next();
+}
+
+router.post("/signin", validateLogin, async(req, res) => {
   try{
     const loginInformation = req.body;
     const [data] = await getLoginInfo(loginInformation);
     if (data.length === 0) {
       return res.status(404).json({ message: "User not found" });
     }
-
     const result = await validatePassword(loginInformation, data);
     if (result) {
       res.status(200).json({
