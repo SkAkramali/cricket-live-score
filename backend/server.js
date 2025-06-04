@@ -5,11 +5,11 @@ const app = express();
 app.use(express.json());
 
 const userRouter = require("./routes/teams");
-const loginInfo = require("./routes/login");
+const loginInfo = require("./routes/aouth");
 
 // Route handlers
 app.use("/ipl", userRouter);
-app.use("/login", loginInfo);
+app.use("/aouth", loginInfo);
 
 app.listen(5000, () => {
   console.log("Server started on port 5000");

@@ -39,7 +39,7 @@ router.post("/signin", validateLogin, async(req, res) => {
   }
 });
 
-router.post("/", async(req, res)=> {
+router.post("/signup", async(req, res)=> {
   try{
     const data = req.body;
     const hashedPassword = await bcrypt.hash(data.password, 6);
