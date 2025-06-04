@@ -8,7 +8,7 @@ const userRouter = require("./routes/teams");
 const loginInfo = require("./routes/aouth");
 
 // Route handlers
-app.use("/ipl", userRouter);
+app.use("/teams", userRouter);
 app.use("/aouth", loginInfo);
 
 app.listen(5000, () => {
