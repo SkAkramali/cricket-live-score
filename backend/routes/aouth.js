@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 const bcrypt = require("bcrypt");
-const {validatePassword, getLoginInfo} = require("../handlers/aouthHandlers")
+const {validatePassword, getLoginInfo} = require("../handlers/aouthHandlers");
+const cookieSession = require("cookie-session");
 
 
 
@@ -14,15 +15,40 @@ const validateLogin = (req, res, next) => { // middleware for checking data is g
   next();
 }
 
+router.use(cookieSession({
+  name: "seesion",
+  keys: ["dskasdfk2", "dkaskdflfks3", "fskdfdlfj47"],
+  maxAge: 24 * 60 * 60 * 1000
+}));
+
+router.get("/issignined", (req, res) => {
+  console.log(req.session)
+
+  if(req.session && req.session.user) {
+    return res.status(200).json({
+      islogined: true,
+      user: req.session.user,
+    });
+  } else {
+    return res.status(401).json({
+      islogined: false,
+      message: "user not logined"
+    })
+  }
+});
+
 router.post("/signin", validateLogin, async(req, res) => {
   try{
     const loginInformation = req.body;
+    console.log(req.body);
     const [data] = await getLoginInfo(loginInformation);
     if (data.length === 0) {
       return res.status(404).json({ message: "User not found" });
     }
     const result = await validatePassword(loginInformation, data);
     if (result) {
+      req.session.user = req.body.email;
+      console.log(req.session);
       res.status(200).json({
         message: "authenticated"
       })
@@ -54,5 +80,7 @@ router.post("/signup", async(req, res)=> {
     });
   }
 });
+
+
 
 module.exports = router;
