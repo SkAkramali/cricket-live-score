@@ -48,7 +48,6 @@ router.post("/signin", validateLogin, async(req, res) => {
     const result = await validatePassword(loginInformation, data);
     if (result) {
       req.session.user = req.body.email;
-      console.log(req.session);
       res.status(200).json({
         message: "authenticated"
       })
@@ -82,5 +81,11 @@ router.post("/signup", async(req, res)=> {
 });
 
 
+router.get("/logout", (req, res) => {
+  req.session = null;
+  return res.status(200).json({
+    message: "logout successful !"
+  });
+})
 
 module.exports = router;
