@@ -6,10 +6,12 @@ app.use(express.json());
 
 const userRouter = require("./routes/teams");
 const loginInfo = require("./routes/aouth");
+const player = require("./routes/players");
 
 // Route handlers
 app.use("/teams", userRouter);
 app.use("/aouth", loginInfo);
+app.use("/player", player);
 
 app.use(cookieSession({
   name: "seesion",
