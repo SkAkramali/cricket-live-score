@@ -49,7 +49,8 @@ router.post("/signin", validateLogin, async(req, res) => {
     if (result) {
       req.session.user = req.body.email;
       res.status(200).json({
-        message: "authenticated"
+        message: "authenticated",
+        status:true
       })
     } else {
       res.status(401).json({

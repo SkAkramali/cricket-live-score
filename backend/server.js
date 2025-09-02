@@ -1,8 +1,10 @@
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const cookieSession = require("cookie-session");
 // Middleware to parse JSON body (important for POST requests)
 app.use(express.json());
+app.use(cors())
 
 const userRouter = require("./routes/teams");
 const loginInfo = require("./routes/aouth");
@@ -12,6 +14,7 @@ const player = require("./routes/players");
 app.use("/teams", userRouter);
 app.use("/aouth", loginInfo);
 app.use("/player", player);
+
 
 app.use(cookieSession({
   name: "seesion",
