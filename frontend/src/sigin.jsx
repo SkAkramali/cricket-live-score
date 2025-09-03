@@ -27,7 +27,6 @@ const From = () => {
     } else {
       alert("password missmatched");
     }
-    console.log(data);
   }
 
  return(
