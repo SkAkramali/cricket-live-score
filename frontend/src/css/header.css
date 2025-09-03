@@ -1,0 +1,16 @@
+.App-header{
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  top:0px;
+  left: 0px;
+  right: 0px;
+  background:#2C2E39 ;
+  color:white;
+}
+.logo{
+  font-size: larger;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-left: 20px;
+}
