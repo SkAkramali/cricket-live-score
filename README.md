@@ -6,5 +6,7 @@
 > NOTE: This website does not display any INTERNATIONAL or IPL Match Scores
 
 ## Steps To Run The Website:
-1. Run `npm i ` OR `npm install` in Main, Backend and Frotend Folder.
-2. Run `node server.js` in Backend
+1. Run `npm i ` OR `npm install` in Main, Backend and Frontend Folder.
+2. Run `npm run dev` in Backend and Frontend.
+
+
