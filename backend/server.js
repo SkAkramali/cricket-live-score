@@ -1,28 +1,49 @@
 const express = require("express");
 const cors = require("cors");
-const app = express();
 const cookieSession = require("cookie-session");
-// Middleware to parse JSON body (important for POST requests)
-app.use(express.json());
-app.use(cors())
 
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(cors());
+
+app.use(cookieSession({
+  name: "session",
+  keys: ["key1", "key2", "key3"],
+  maxAge: 24 * 60 * 60 * 1000
+}));
+
+// Routers
 const userRouter = require("./routes/teams");
 const loginInfo = require("./routes/aouth");
 const player = require("./routes/players");
 
-// Route handlers
 app.use("/teams", userRouter);
 app.use("/aouth", loginInfo);
 app.use("/player", player);
 
+// ---------------- Swagger Setup ----------------
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "IPL App API",
+      version: "1.0.0",
+      description: "APIs for IPL teams, players, and authentication",
+    },
+  },
+  apis: ["./routes/*.js"], // Swagger will read comments in all route files
+};
 
-app.use(cookieSession({
-  name: "seesion",
-  keys: ["dskasdfk2", "dkaskdflfks3", "fskdfdlfj47"],
-  maxAge: 24 * 60 * 60 * 1000
-}));
+const specs = swaggerJsdoc(options);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
+// ---------------- Start Server ----------------
 app.listen(5000, () => {
   console.log("Server started on port 5000");
-  console.log(` Teams/get api: \x1b[36mhttp://localhost:${5000}\\ipl\\teams\x1b[0m`);
+  console.log("Swagger UI: http://localhost:5000/api-docs");
 });
