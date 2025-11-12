@@ -1,0 +1,188 @@
+openapi: 3.0.0
+info:
+  title: LIVE CRICKET SCORE API'S
+  version: 1.0.0
+  description: APIs for IPL teams, players, and authentication
+
+tags:
+  - name: Players
+    description: Operations related to cricket players
+  - name: Auth
+    description: Authentication and user management
+
+paths:
+  /player:
+    post:
+      tags: [Players]
+      summary: Register a new player
+      description: Adds a new player to the database
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - playerName
+                - teamId
+                - role
+                - battingStyle
+              properties:
+                playerName:
+                  type: string
+                  example: "AKRAM"
+                teamId:
+                  type: integer
+                  example: 100
+                role:
+                  type: string
+                  example: "Batsman"
+                battingStyle:
+                  type: string
+                  example: "Right hand"
+                bowlingStyle:
+                  type: string
+                  example: ""
+      responses:
+        201:
+          description: Player registered successfully
+        500:
+          description: Internal server error
+
+  /aouth/issignined:
+    get:
+      tags: [Auth]
+      summary: Check if user is logged in
+      responses:
+
+        200:
+          description: User is logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  islogined:
+                    type: boolean
+                    example: true
+                  user:
+                    type: string
+                    example: "Alice"
+        401:
+          description: User not logged in
+
+  /aouth/signin:
+    post:
+      tags: [Auth]
+      summary: Sign in a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "mypassword"
+      responses:
+        200:
+          description: Authenticated successfully
+        401:
+          description: Password not matched
+        404:
+          description: User not found
+        400:
+          description: Missing username or password
+
+  /aouth/signup:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userName
+                - email
+                - password
+              properties:
+                userName:
+                  type: string
+                  example: "Alice"
+                email:
+                  type: string
+                  example: "alice@example.com"
+                password:
+                  type: string
+                  example: "mypassword"
+      responses:
+        201:
+          description: User registered successfully
+        500:
+          description: Server error
+
+  /aouth/logout:
+    get:
+      tags: [Auth]
+      summary: Logout the user
+      responses:
+        200:
+          description: Logout successful
+
+  /player/{player_id}:
+    get:
+      tags: [Players]
+      summary: Get information about a specific player
+      description: Fetch details of a player by their unique player ID
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          description: The unique ID of the player
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Player details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        player_id:
+                          type: integer
+                          example: 1
+                        player_name:
+                          type: string
+                          example: "akram"
+                        team_id:
+                          type: integer
+                          example: 100
+                        role:
+                          type: string
+                          example: "All-Rounder"
+                        batting_style:
+                          type: string
+                          example: "righthand"
+                        bowling_style:
+                          type: string
+                          example: "righthand fastbowler"
+        404:
+          description: Player not found
+

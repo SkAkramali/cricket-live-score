@@ -31,13 +31,14 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "IPL App API",
+      title: "LIVE CRICKET SCORE API'S",
       version: "1.0.0",
       description: "APIs for IPL teams, players, and authentication",
     },
   },
-  apis: ["./routes/*.js"], // Swagger will read comments in all route files
+  apis: ["./apiDoc.yaml"], // Swagger will read comments in all route files
 };
+
 
 const specs = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
