@@ -9,6 +9,8 @@ tags:
     description: Operations related to cricket players
   - name: Auth
     description: Authentication and user management
+  - name: Matchs
+    description: Used to get Matchs data
 
 paths:
   /player:
@@ -185,4 +187,82 @@ paths:
                           example: "righthand fastbowler"
         404:
           description: Player not found
-
+    
+  /matchs: 
+    get: 
+      tags: [Matchs]
+      summary: Are used to insert or retrive Matchs data
+      responses: 
+        200:
+          description: Matchs which are Scheduled 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  match_id: 
+                    type: integer
+                    example: 1
+                  team1_id:
+                    type: integer
+                    example: 100
+                  team2_id:
+                    type: integer
+                    example: 108
+                  match_date:
+                    type: date
+                    example: "2025-10-20"
+                  venue: 
+                    type: string
+                    example: "chepouk"
+                  status: 
+                    type: string
+                    example: "Live"
+                  toss_winner:
+                    type: integer
+                    example: 100
+                  toss_decision: 
+                    type: string
+                    example: "Bat"
+                  result: 
+                    type: string
+                    example: "ongoing"
+  
+  /matchs/: 
+    post: 
+      tags: [Matchs]
+      summary: Used to Schedule a match
+      requestBody: 
+          description: Matchs which are Scheduled 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  match_id: 
+                    type: integer
+                    example: 1
+                  team1_id:
+                    type: integer
+                    example: 100
+                  team2_id:
+                    type: integer
+                    example: 108
+                  match_date:
+                    type: date
+                    example: "2025-10-20"
+                  venue: 
+                    type: string
+                    example: "chepouk"
+                  status: 
+                    type: string
+                    example: "Live"
+                  toss_winner:
+                    type: integer
+                    example: 100
+                  toss_decision: 
+                    type: string
+                    example: "Bat"
+                  result: 
+                    type: string
+                    example: "ongoing"

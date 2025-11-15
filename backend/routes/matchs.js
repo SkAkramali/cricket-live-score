@@ -61,7 +61,7 @@ router.post("/", async(req, res) => {
       ]
     );
 
-    return res.status(200).json({message: "match scheduled successfully"});
+    return res.status(201).json({message: "match scheduled successfully"});
 
   } catch (err) {
     return res.status(404).json({ message: err.message || err });
