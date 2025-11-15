@@ -21,6 +21,7 @@ app.use(cookieSession({
 const userRouter = require("./routes/teams");
 const loginInfo = require("./routes/aouth");
 const player = require("./routes/players");
+const matchs = require("./routes/matchs");
 
 app.use("/teams", userRouter);
 app.use("/aouth", loginInfo);
@@ -42,6 +43,7 @@ const options = {
 
 const specs = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+app.use("/matchs", matchs);
 
 // ---------------- Start Server ----------------
 app.listen(5000, () => {
