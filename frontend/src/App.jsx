@@ -5,6 +5,7 @@ import { Header } from './header';
 import { LandingPage } from './landingPage';
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Dashboard } from './dashboard';
 import SignUp from './signup';
 function App() {
   const [isSignedIn, setIsSignedIn] = useState(null);
@@ -37,7 +38,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
       </Routes>
       <Header />
-      {isSignedIn ? (<LandingPage />) : (<SignUp onLoginSuccess={() => setIsSignedIn(true)} />)}
+      {isSignedIn ? (<LandingPage />) : (<Dashboard></Dashboard>)}
     </>
   );
 }
