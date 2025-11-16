@@ -1,32 +1,91 @@
-.form{
-  background-color: #FFFFFF;
-  padding: 40px;
+
+.form {
+  width: 380px;
+  margin: 40px auto;
+  padding: 35px;
+  background: #ffffff;
+  border-radius: 14px;
+
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+
+  border: 1px solid #e7eaf0;
+
+  transition: 0.3s ease;
+}
+
+.form:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+}
+
+.form h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.userDeatils {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 18px;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+
+  border: 1px solid #d2d8e2;
+  background: #f9fbfd;
+  font-size: 15px;
+  color: #1f2937;
+
+  transition: all 0.25s ease;
 }
 
-.userDeatils{
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 20px;
-  border: 1px solid #D3D3D3; /* Light grey border */
-  border-radius: 4px;
-  box-sizing: border-box; /* Include padding in width calculation */
-  font-size: 16px;
-  background-color: #FFFFFF; /* Pure white background */
-  color: #36454f; /* Charcoal grey text */
-  transition: border-color 0.3s ease;
+.userDeatils:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.form > button{
+.userDeatils::placeholder {
+  color: #9aa4b2;
+}
+
+.form > button {
   width: 100%;
-  padding: 12px;
-  background-color: #007BFF; /* A clean, professional blue */
-  color: #FFFFFF;
+  padding: 14px;
+  background: linear-gradient(90deg, #007bff, #00b4ff);
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
-  font-size: 18px;
+  border-radius: 8px;
+
+  font-size: 17px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+
+  transition: all 0.25s ease;
 }
 
+.form > button:hover {
+  background: linear-gradient(90deg, #0067d7, #0095e6);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 123, 255, 0.25);
+}
+
+.form p {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.form p a {
+  color: #007bff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.25s ease;
+}
+
+.form p a:hover {
+  text-decoration: underline;
+}

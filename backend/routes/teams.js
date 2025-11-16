@@ -23,6 +23,14 @@ router.post("/", async(req, res) =>{
   }
 });
 
-
+router.get("/:id", async(req, res)=>{
+  const id = req.params.id;
+   try{
+    const [data] = await db.execute("select * from teams where team_id = ?", [id]);
+    res.json(data);
+  } catch(err){
+    res.status(500).json({errorMessage: err});
+  }
+})
 
 module.exports = router;
