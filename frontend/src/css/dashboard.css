@@ -14,7 +14,6 @@ h1 {
   font-weight: 700;
 
   background: linear-gradient(90deg, #007bff, #00c6ff);
-  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
