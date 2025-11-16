@@ -20,102 +20,7 @@ router.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000
 }));
 
-// ---------------- Swagger Comments ----------------
-
-/**
- * @swagger
- * /aouth/issignined:
- *   get:
- *     summary: Check if user is logged in
- *     responses:
- *       200:
- *         description: User is logged in
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 islogined:
- *                   type: boolean
- *                 user:
- *                   type: string
- *       401:
- *         description: User not logged in
- */
-
-/**
- * @swagger
- * /aouth/signin:
- *   post:
- *     summary: Sign in a user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *                 example: "user@example.com"
- *               password:
- *                 type: string
- *                 example: "mypassword"
- *     responses:
- *       200:
- *         description: Authenticated successfully
- *       401:
- *         description: Password not matched
- *       404:
- *         description: User not found
- *       400:
- *         description: Missing username or password
- */
-
-/**
- * @swagger
- * /aouth/signup:
- *   post:
- *     summary: Register a new user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - userName
- *               - email
- *               - password
- *             properties:
- *               userName:
- *                 type: string
- *                 example: "Alice"
- *               email:
- *                 type: string
- *                 example: "alice@example.com"
- *               password:
- *                 type: string
- *                 example: "mypassword"
- *     responses:
- *       201:
- *         description: User registered successfully
- *       500:
- *         description: Server error
- */
-
-/**
- * @swagger
- * /aouth/logout:
- *   get:
- *     summary: Logout the user
- *     responses:
- *       200:
- *         description: Logout successful
- */
+ 
 
 // ---------------- Routes ----------------
 
@@ -138,6 +43,7 @@ router.get("/issignined", (req, res) => {
 router.post("/signin", validateLogin, async (req, res) => {
   try {
     const loginInformation = req.body;
+    console.log(loginInformation);
     const [data] = await getLoginInfo(loginInformation);
     if (data.length === 0) {
       return res.status(404).json({ message: "User not found" });
