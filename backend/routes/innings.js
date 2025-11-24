@@ -17,4 +17,16 @@ router.get("/:inningsId", async(req, res)=>{
   }
 });
 
+ 
+
+router.post("/", async(req, res)=>{
+  const data = res.body;
+  try{
+
+    db.execute("insert into innings (match_id, bowling_team_id, batting_team_id, innings_number, total_runs, total_wickets, overs) values (?, ?, ?,?,?,?,?)",[data.match_id, data.bowling_team_id, data.batting_team_id, data.innings_number, data.total_runs, data.total_wickets, data.overs]);
+    return res.status(200).json({message: succfully});
+  } catch(err){
+    return res.status(404).json({message: err});
+  }
+});
 module.exports = router;
