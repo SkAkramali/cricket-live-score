@@ -5,7 +5,6 @@ const cookieSession = require("cookie-session");
 
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
-
 const app = express();
 
 app.use(express.json());
@@ -34,7 +33,6 @@ const loginInfo = require("./routes/aouth");
 const player = require("./routes/players");
 const matchs = require("./routes/matchs");
 const innings = require('./routes/innings');
-
 
 app.use("/inngings", innings);
 app.use("/teams", userRouter);

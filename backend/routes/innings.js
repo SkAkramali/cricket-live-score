@@ -17,6 +17,17 @@ router.get("/:inningsId", async(req, res)=>{
   }
 });
 
+
+router.put("/updateScore/:inningsId", async(req, res)=> {
+  const score = req.body.score;
+  try{
+    const result  = await db.execute("update innings set score = score+? where innings_id = ?", [score, req.params.inningsId]);
+    return res.status(200).json({message: "Score updated successfully"});
+  } catch(err){
+    return res.status(404).json({message: "Something went wrong"});
+  }
+});
+
  
 
 router.post("/", async(req, res)=>{
@@ -29,4 +40,6 @@ router.post("/", async(req, res)=>{
     return res.status(404).json({message: err});
   }
 });
+
+
 module.exports = router;
