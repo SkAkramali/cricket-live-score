@@ -27,9 +27,9 @@ router.get("/:id", async(req, res)=>{
   const id = req.params.id;
    try{
     const [data] = await db.execute("select * from teams where team_id = ?", [id]);
-    res.json(data);
+    return res.status(200).json(data);
   } catch(err){
-    res.status(500).json({errorMessage: err});
+    return res.status(500).json({errorMessage: err});
   }
 })
 
