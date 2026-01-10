@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../database");
 const bcrypt = require("bcrypt");
-const { validatePassword, getLoginInfo } = require("../handlers/aouthHandlers");
+const { validatePassword, getLoginInfo, issigninedHandler, signupHandler, logoutHandler } = require("../handlers/aouthHandlers");
 const cookieSession = require("cookie-session");
 
 // ---------------- Middleware ----------------
@@ -24,21 +24,7 @@ router.use(cookieSession({
 
 // ---------------- Routes ----------------
 
-router.get("/issignined", (req, res) => {
-  console.log(req.session);
-
-  if (req.session && req.session.user) {
-    return res.status(200).json({
-      islogined: true,
-      user: req.session.user,
-    });
-  } else {
-    return res.status(401).json({
-      islogined: false,
-      message: "user not logined"
-    });
-  }
-});
+router.get("/issignined", issigninedHandler);
 
 router.post("/signin", validateLogin, async (req, res) => {
   try {
@@ -68,27 +54,8 @@ router.post("/signin", validateLogin, async (req, res) => {
   }
 });
 
-router.post("/signup", async (req, res) => {
-  try {
-    const data = req.body;
-    const hashedPassword = await bcrypt.hash(data.password, 6);
-    const query = "insert into logininfo (username, password, email) values(?, ?, ?)";
-    await db.execute(query, [data.userName, hashedPassword, data.email]);
-    res.status(201).json({
-      message: "Successfully registered",
-    });
-  } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
-  }
-});
+router.post("/signup", signupHandler);
 
-router.get("/logout", (req, res) => {
-  req.session = null;
-  return res.status(200).json({
-    message: "logout successful !"
-  });
-});
+router.get("/logout", logoutHandler);
 
 module.exports = router;

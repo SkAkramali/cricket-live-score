@@ -34,3 +34,63 @@
   background-color: white;
   transition: all 0.5s;
 }
+
+.profile{
+  width:50px;
+  height:50px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.popupContainer{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup{
+  position: absolute;
+  top:30px;
+  right:500px;
+  width:400px;
+  height:190px;
+  background-color: white;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cancelLogout{
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: rgb(123, 243, 123);
+  color: white;
+}
+
+.logout{
+  padding: 10px 20px;
+  border: none;
+  background-color: #f44336;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.popupButtons{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px;
+}

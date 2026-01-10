@@ -29,7 +29,7 @@ function App() {
   return (
     <>
       {/* Header is ALWAYS visible */}
-      <Header />
+      <Header isSignedIn={isSignedIn} />
 
       {/* Routes below header */}
       <Routes>
