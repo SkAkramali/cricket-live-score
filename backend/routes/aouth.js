@@ -1,61 +1,37 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../database");
-const bcrypt = require("bcrypt");
-const { validatePassword, getLoginInfo, issigninedHandler, signupHandler, logoutHandler } = require("../handlers/aouthHandlers");
-const cookieSession = require("cookie-session");
+const { body } = require('express-validator');
+const { handleValidationErrors } = require('../middleware/validator');
+const { authenticateToken } = require('../middleware/auth');
+const {
+  signupHandler,
+  loginHandler,
+  getCurrentUserHandler,
+  refreshTokenHandler,
+  updateProfileHandler,
+  changePasswordHandler
+} = require("../handlers/aouthHandlers");
 
-// ---------------- Middleware ----------------
-const validateLogin = (req, res, next) => {
-  const data = req.body;
-  if (!data.password || !data.email) {
-    return res.status(400).json({ error: "username and password are required" });
-  }
-  next();
-};
+// Validation rules
+const signupValidation = [
+  body('username').trim().isLength({ min: 3, max: 50 }).withMessage('Username must be 3-50 characters'),
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+];
 
-router.use(cookieSession({
-  name: "session",
-  keys: ["dskasdfk2", "dkaskdflfks3", "fskdfdlfj47"],
-  maxAge: 24 * 60 * 60 * 1000
-}));
+const loginValidation = [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('password').notEmpty().withMessage('Password is required')
+];
 
- 
+// Public routes
+router.post('/signup', signupValidation, handleValidationErrors, signupHandler);
+router.post('/login', loginValidation, handleValidationErrors, loginHandler);
+router.post('/refresh-token', refreshTokenHandler);
 
-// ---------------- Routes ----------------
-
-router.get("/issignined", issigninedHandler);
-
-router.post("/signin", validateLogin, async (req, res) => {
-  try {
-    const loginInformation = req.body;
-    console.log(loginInformation);
-    const [data] = await getLoginInfo(loginInformation);
-    if (data.length === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    const result = await validatePassword(loginInformation, data);
-    if (result) {
-      req.session.user = req.body.email;
-      res.status(200).json({
-        message: "authenticated",
-        status: true
-      });
-    } else {
-      res.status(401).json({
-        message: "Password Not Matched"
-      });
-    }
-
-  } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
-  }
-});
-
-router.post("/signup", signupHandler);
-
-router.get("/logout", logoutHandler);
+// Protected routes (require authentication)
+router.get('/me', authenticateToken, getCurrentUserHandler);
+router.put('/profile', authenticateToken, updateProfileHandler);
+router.put('/change-password', authenticateToken, changePasswordHandler);
 
 module.exports = router;

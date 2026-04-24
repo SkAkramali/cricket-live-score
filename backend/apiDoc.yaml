@@ -1,23 +1,1235 @@
 openapi: 3.0.0
 info:
-  title: LIVE CRICKET SCORE API'S
+  title: Cricket Live Score API
   version: 1.0.0
-  description: APIs for IPL teams, players, and authentication
+  description: |
+    🏏 Production-ready API for live cricket scoring with real-time updates via WebSocket.
+    
+    Features:
+    - JWT Authentication with role-based access control
+    - Real-time score updates via WebSocket
+    - Ball-by-ball scoring system
+    - Player statistics and analytics
+    - Match management with unique shareable codes
+    
+    Base URL: http://localhost:5000
+  contact:
+    name: API Support
+    email: support@cricket-score.com
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+  - url: http://localhost:5000/api
+    description: API base path
 
 tags:
+  - name: Authentication
+    description: User authentication and authorization (JWT-based)
+  - name: Matches
+    description: Match management and live match operations
+  - name: Live Scoring
+    description: Real-time ball-by-ball scoring (Scorer/Admin only)
+  - name: Analytics
+    description: Match statistics, player stats, and analytics
+  - name: Teams
+    description: Team management operations
   - name: Players
-    description: Operations related to cricket players
-  - name: Auth
-    description: Authentication and user management
-  - name: Matchs
-    description: Used to get Matchs data
+    description: Player management operations
+  - name: Health
+    description: System health and status checks
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter your JWT token in the format **Bearer &lt;token&gt;**
+  
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "john_doe"
+        email:
+          type: string
+          example: "john@example.com"
+        full_name:
+          type: string
+          example: "John Doe"
+        role:
+          type: string
+          enum: [player, scorer, admin]
+          example: "scorer"
+    
+    Match:
+      type: object
+      properties:
+        match_id:
+          type: integer
+          example: 1
+        match_code:
+          type: string
+          example: "A3E7K9"
+        team1_name:
+          type: string
+          example: "Warriors"
+        team2_name:
+          type: string
+          example: "Titans"
+        status:
+          type: string
+          enum: [scheduled, live, completed, cancelled]
+          example: "live"
+        venue:
+          type: string
+          example: "Local Cricket Ground"
+    
+    BattingStats:
+      type: object
+      properties:
+        player_name:
+          type: string
+          example: "Virat Kumar"
+        runs_scored:
+          type: integer
+          example: 65
+        balls_faced:
+          type: integer
+          example: 42
+        fours:
+          type: integer
+          example: 7
+        sixes:
+          type: integer
+          example: 2
+        strike_rate:
+          type: number
+          format: float
+          example: 154.76
+    
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+        error:
+          type: string
+          example: "Technical error details"
 
 paths:
-  /player:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check endpoint
+      description: Check if the server is running and healthy
+      responses:
+        200:
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Server is healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: number
+                    example: 3600.5
+
+  # ==================== AUTHENTICATION APIS ====================
+  
+  /api/auth/signup:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Create a new user account with JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  example: "john_doe"
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  minLength: 6
+                  example: "secure123"
+                full_name:
+                  type: string
+                  example: "John Doe"
+                phone:
+                  type: string
+                  example: "+1234567890"
+                role:
+                  type: string
+                  enum: [player, scorer, admin]
+                  default: player
+                  example: "scorer"
+      responses:
+        201:
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User registered successfully"
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      accessToken:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      refreshToken:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        400:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        409:
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      description: Authenticate user and return JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "secure123"
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Login successful"
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      accessToken:
+                        type: string
+                      refreshToken:
+                        type: string
+        401:
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/refresh-token:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: Get a new access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        200:
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+        401:
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      description: Get authenticated user information
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User information retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        401:
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/profile:
+    put:
+      tags: [Authentication]
+      summary: Update user profile
+      description: Update authenticated user's profile information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                  example: "John Smith"
+                phone:
+                  type: string
+                  example: "+9876543210"
+      responses:
+        200:
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Profile updated successfully"
+        401:
+          description: Not authenticated
+
+  /api/auth/change-password:
+    put:
+      tags: [Authentication]
+      summary: Change password
+      description: Change authenticated user's password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  example: "oldpass123"
+                newPassword:
+                  type: string
+                  minLength: 6
+                  example: "newpass456"
+      responses:
+        200:
+          description: Password changed successfully
+        401:
+          description: Current password is incorrect
+
+  # ==================== MATCH MANAGEMENT APIS ====================
+  
+  /api/matches:
+    get:
+      tags: [Matches]
+      summary: Get all matches
+      description: Retrieve all matches with optional filtering by status
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [scheduled, live, completed, cancelled]
+          description: Filter matches by status
+          example: "live"
+      responses:
+        200:
+          description: Matches retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      matches:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Match'
+                      count:
+                        type: integer
+                        example: 5
+    
+    post:
+      tags: [Matches]
+      summary: Create a new match
+      description: Create a new cricket match (Requires authentication)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - team1_id
+                - team2_id
+                - match_date
+              properties:
+                team1_id:
+                  type: integer
+                  example: 1
+                team2_id:
+                  type: integer
+                  example: 2
+                match_date:
+                  type: string
+                  format: date-time
+                  example: "2026-03-15T14:00:00"
+                venue:
+                  type: string
+                  example: "Local Cricket Ground"
+                overs_per_side:
+                  type: integer
+                  default: 20
+                  example: 20
+                match_type:
+                  type: string
+                  enum: [t20, odi, test, custom]
+                  default: t20
+                  example: "t20"
+      responses:
+        201:
+          description: Match created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Match created successfully"
+                  data:
+                    type: object
+                    properties:
+                      match_id:
+                        type: integer
+                        example: 1
+                      match_code:
+                        type: string
+                        example: "A3E7K9"
+                        description: "Share this code with spectators!"
+        401:
+          description: Not authenticated
+        400:
+          description: Validation error
+
+  /api/matches/code/{matchCode}:
+    get:
+      tags: [Matches]
+      summary: Join match by code
+      description: Get match details using the unique match code
+      parameters:
+        - in: path
+          name: matchCode
+          required: true
+          schema:
+            type: string
+          description: Unique 6-character match code
+          example: "A3E7K9"
+      responses:
+        200:
+          description: Match details retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      match:
+                        $ref: '#/components/schemas/Match'
+                      innings:
+                        type: array
+                        items:
+                          type: object
+        404:
+          description: Match not found with this code
+
+  /api/matches/{match_id}/summary:
+    get:
+      tags: [Matches]
+      summary: Get live match summary
+      description: Get current live status of a match including scores, batsmen, bowler
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema:
+            type: integer
+          description: Match ID
+          example: 1
+      responses:
+        200:
+          description: Live match summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      match:
+                        $ref: '#/components/schemas/Match'
+                      current_innings:
+                        type: object
+                      current_batsmen:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BattingStats'
+                      current_bowler:
+                        type: object
+                      recent_balls:
+                        type: array
+                        items:
+                          type: object
+        404:
+          description: Match not found
+
+  /api/matches/{match_id}/start:
+    post:
+      tags: [Matches]
+      summary: Start match (Toss)
+      description: Start a match with toss decision (Requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - toss_winner_team_id
+                - toss_decision
+              properties:
+                toss_winner_team_id:
+                  type: integer
+                  example: 1
+                toss_decision:
+                  type: string
+                  enum: [bat, bowl]
+                  example: "bat"
+      responses:
+        200:
+          description: Match started successfully
+        401:
+          description: Not authenticated
+        404:
+          description: Match not found
+
+  # ==================== LIVE SCORING APIS ====================
+  
+  /api/scoring/ball:
+    post:
+      tags: [Live Scoring]
+      summary: Record a ball
+      description: Record a ball in the match (Scorer/Admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - match_id
+                - innings_id
+                - batsman_id
+                - bowler_id
+                - non_striker_id
+              properties:
+                match_id:
+                  type: integer
+                  example: 1
+                innings_id:
+                  type: integer
+                  example: 1
+                batsman_id:
+                  type: integer
+                  example: 5
+                bowler_id:
+                  type: integer
+                  example: 15
+                non_striker_id:
+                  type: integer
+                  example: 8
+                runs_scored:
+                  type: integer
+                  default: 0
+                  example: 4
+                extras:
+                  type: integer
+                  default: 0
+                  example: 0
+                extra_type:
+                  type: string
+                  enum: [none, wide, noball, bye, legbye]
+                  default: none
+                  example: "none"
+                is_wicket:
+                  type: boolean
+                  default: false
+                  example: false
+                wicket_type:
+                  type: string
+                  enum: [none, bowled, caught, lbw, run-out, stumped, hit-wicket]
+                  default: none
+                  example: "none"
+                dismissed_player_id:
+                  type: integer
+                  nullable: true
+                fielder_id:
+                  type: integer
+                  nullable: true
+                commentary:
+                  type: string
+                  example: "Beautiful cover drive for FOUR!"
+      responses:
+        201:
+          description: Ball recorded successfully (All viewers notified via WebSocket)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Ball recorded successfully"
+                  data:
+                    type: object
+                    properties:
+                      ball_id:
+                        type: integer
+                      runs_scored:
+                        type: integer
+                      total_runs:
+                        type: integer
+                      total_wickets:
+                        type: integer
+                      total_overs:
+                        type: number
+                        format: float
+        401:
+          description: Not authenticated or insufficient permissions
+        403:
+          description: Forbidden - Scorer/Admin role required
+
+  /api/scoring/innings/{innings_id}/start:
+    post:
+      tags: [Live Scoring]
+      summary: Start innings
+      description: Start an innings with opening batsmen and bowler (Scorer/Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: innings_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - batsman1_id
+                - batsman2_id
+                - bowler_id
+              properties:
+                batsman1_id:
+                  type: integer
+                  example: 5
+                batsman2_id:
+                  type: integer
+                  example: 8
+                bowler_id:
+                  type: integer
+                  example: 15
+      responses:
+        200:
+          description: Innings started successfully
+        401:
+          description: Not authenticated
+        403:
+          description: Forbidden - Scorer/Admin role required
+
+  /api/scoring/innings/{innings_id}/batsman/change:
+    post:
+      tags: [Live Scoring]
+      summary: Change batsman
+      description: Replace a batsman (when wicket falls or retired) - Scorer/Admin only
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: innings_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - out_batsman_id
+                - new_batsman_id
+              properties:
+                out_batsman_id:
+                  type: integer
+                  example: 5
+                new_batsman_id:
+                  type: integer
+                  example: 12
+      responses:
+        200:
+          description: Batsman changed successfully
+        401:
+          description: Not authenticated
+        403:
+          description: Forbidden
+
+  /api/scoring/innings/{innings_id}/bowler/change:
+    post:
+      tags: [Live Scoring]
+      summary: Change bowler
+      description: Change the current bowler (Scorer/Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: innings_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - new_bowler_id
+              properties:
+                old_bowler_id:
+                  type: integer
+                  nullable: true
+                  example: 15
+                new_bowler_id:
+                  type: integer
+                  example: 18
+      responses:
+        200:
+          description: Bowler changed successfully
+        401:
+          description: Not authenticated
+        403:
+          description: Forbidden
+
+  /api/scoring/innings/{innings_id}/end:
+    post:
+      tags: [Live Scoring]
+      summary: End innings
+      description: End the current innings (Scorer/Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: innings_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Innings ended successfully
+        401:
+          description: Not authenticated
+        403:
+          description: Forbidden
+
+  # ==================== ANALYTICS APIS ====================
+  
+  /api/analytics/match/{match_id}/scorecard:
+    get:
+      tags: [Analytics]
+      summary: Get match scorecard
+      description: Get complete scorecard with batting and bowling statistics
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Scorecard retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      match:
+                        $ref: '#/components/schemas/Match'
+                      innings:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            innings:
+                              type: object
+                            batting:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/BattingStats'
+                            bowling:
+                              type: array
+                              items:
+                                type: object
+        404:
+          description: Match not found
+
+  /api/analytics/match/{match_id}/analytics:
+    get:
+      tags: [Analytics]
+      summary: Get match analytics
+      description: Get detailed match statistics including run rates, partnerships, boundaries
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      run_rates:
+                        type: array
+                      highest_partnership:
+                        type: object
+                      boundaries:
+                        type: object
+                      extras:
+                        type: object
+
+  /api/analytics/match/{match_id}/top-batsmen:
+    get:
+      tags: [Analytics]
+      summary: Get top batsmen
+      description: Get top batsmen from a match
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 5
+          example: 3
+      responses:
+        200:
+          description: Top batsmen retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      batsmen:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BattingStats'
+
+  /api/analytics/match/{match_id}/top-bowlers:
+    get:
+      tags: [Analytics]
+      summary: Get top bowlers
+      description: Get top bowlers from a match
+      parameters:
+        - in: path
+          name: match_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 5
+          example: 3
+      responses:
+        200:
+          description: Top bowlers retrieved
+
+  /api/analytics/player/{player_id}/career:
+    get:
+      tags: [Analytics]
+      summary: Get player career statistics
+      description: Get comprehensive career statistics for a player
+      parameters:
+        - in: path
+          name: player_id
+          required: true
+          schema:
+            type: integer
+          example: 5
+      responses:
+        200:
+          description: Career statistics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      player:
+                        type: object
+                      batting:
+                        type: object
+                        properties:
+                          matches_played:
+                            type: integer
+                          total_runs:
+                            type: integer
+                          average_runs:
+                            type: number
+                          highest_score:
+                            type: integer
+                          strike_rate:
+                            type: number
+                      bowling:
+                        type: object
+
+  /api/analytics/innings/{innings_id}/partnerships:
+    get:
+      tags: [Analytics]
+      summary: Get partnerships
+      description: Get all partnerships for an innings
+      parameters:
+        - in: path
+          name: innings_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Partnerships retrieved
+
+  /api/analytics/innings/{innings_id}/commentary:
+    get:
+      tags: [Analytics]
+      summary: Get ball-by-ball commentary
+      description: Get detailed ball-by-ball commentary for an innings
+      parameters:
+        - in: path
+          name: innings_id
+          required: true
+          schema:
+            type: integer
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+          example: 20
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+          example: 0
+      responses:
+        200:
+          description: Commentary retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      balls:
+                        type: array
+                        items:
+                          type: object
+                      total:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+
+  # ==================== TEAMS & PLAYERS APIS ====================
+  
+  /api/teams:
+    get:
+      tags: [Teams]
+      summary: Get all teams
+      description: Retrieve all cricket teams
+      responses:
+        200:
+          description: Teams retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        team_id:
+                          type: integer
+                        team_name:
+                          type: string
+                        team_short_name:
+                          type: string
+    
+    post:
+      tags: [Teams]
+      summary: Create a new team
+      description: Create a new cricket team (Requires authentication)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - team_name
+              properties:
+                team_name:
+                  type: string
+                  example: "Warriors"
+                team_short_name:
+                  type: string
+                  example: "WAR"
+                logo_url:
+                  type: string
+                home_ground:
+                  type: string
+      responses:
+        201:
+          description: Team created successfully
+        401:
+          description: Not authenticated
+
+  /api/teams/{id}:
+    get:
+      tags: [Teams]
+      summary: Get team by ID
+      description: Get details of a specific team
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Team details retrieved
+        404:
+          description: Team not found
+
+  /api/players:
+    get:
+      tags: [Players]
+      summary: Get all players
+      description: Retrieve all cricket players
+      responses:
+        200:
+          description: Players retrieved successfully
+    
     post:
       tags: [Players]
-      summary: Register a new player
-      description: Adds a new player to the database
+      summary: Add a new player
+      description: Add a new player to a team (Requires authentication)
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -32,208 +1244,50 @@ paths:
               properties:
                 playerName:
                   type: string
-                  example: "AKRAM"
+                  example: "Virat Kumar"
                 teamId:
                   type: integer
-                  example: 100
+                  example: 1
                 role:
                   type: string
-                  example: "Batsman"
+                  enum: [batsman, bowler, all-rounder, wicket-keeper]
+                  example: "batsman"
                 battingStyle:
                   type: string
-                  example: "Right hand"
+                  enum: [right-hand, left-hand]
+                  example: "right-hand"
                 bowlingStyle:
                   type: string
-                  example: ""
+                  enum: [right-arm-fast, left-arm-fast, right-arm-spin, left-arm-spin, leg-spin, none]
+                  example: "none"
+                jersey_number:
+                  type: integer
+                  example: 18
       responses:
         201:
-          description: Player registered successfully
-        500:
-          description: Internal server error
-
-  /aouth/issignined:
-    get:
-      tags: [Auth]
-      summary: Check if user is logged in
-      responses:
-
-        200:
-          description: User is logged in
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  islogined:
-                    type: boolean
-                    example: true
-                  user:
-                    type: string
-                    example: "Alice"
-        401:
-          description: User not logged in
-
-  /aouth/signin:
-    post:
-      tags: [Auth]
-      summary: Sign in a user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-                - password
-              properties:
-                email:
-                  type: string
-                  example: "user@example.com"
-                password:
-                  type: string
-                  example: "mypassword"
-      responses:
-        200:
-          description: Authenticated successfully
-        401:
-          description: Password not matched
-        404:
-          description: User not found
+          description: Player added successfully
         400:
-          description: Missing username or password
+          description: Validation error
+        401:
+          description: Not authenticated
 
-  /aouth/signup:
-    post:
-      tags: [Auth]
-      summary: Register a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - userName
-                - email
-                - password
-              properties:
-                userName:
-                  type: string
-                  example: "Alice"
-                email:
-                  type: string
-                  example: "alice@example.com"
-                password:
-                  type: string
-                  example: "mypassword"
-      responses:
-        201:
-          description: User registered successfully
-        500:
-          description: Server error
-
-  /aouth/logout:
-    get:
-      tags: [Auth]
-      summary: Logout the user
-      responses:
-        200:
-          description: Logout successful
-
-  /player/{player_id}:
+  /api/players/{playerId}:
     get:
       tags: [Players]
-      summary: Get information about a specific player
-      description: Fetch details of a player by their unique player ID
+      summary: Get player by ID
+      description: Get details of a specific player
       parameters:
-        - name: player_id
-          in: path
+        - in: path
+          name: playerId
           required: true
-          description: The unique ID of the player
           schema:
             type: integer
-            example: 1
+          example: 5
       responses:
         200:
-          description: Player details retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        player_id:
-                          type: integer
-                          example: 1
-                        player_name:
-                          type: string
-                          example: "akram"
-                        team_id:
-                          type: integer
-                          example: 100
-                        role:
-                          type: string
-                          example: "All-Rounder"
-                        batting_style:
-                          type: string
-                          example: "righthand"
-                        bowling_style:
-                          type: string
-                          example: "righthand fastbowler"
+          description: Player details retrieved
         404:
-          description: Player not found
-    
-  /matchs: 
-    get: 
-      tags: [Matchs]
-      summary: Are used to insert or retrive Matchs data
-      responses: 
-        200:
-          description: Matchs which are Scheduled 
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  match_id: 
-                    type: integer
-                    example: 1
-                  team1_id:
-                    type: integer
-                    example: 100
-                  team2_id:
-                    type: integer
-                    example: 108
-                  match_date:
-                    type: date
-                    example: "2025-10-20"
-                  venue: 
-                    type: string
-                    example: "chepouk"
-                  status: 
-                    type: string
-                    example: "Live"
-                  toss_winner:
-                    type: integer
-                    example: 100
-                  toss_decision: 
-                    type: string
-                    example: "Bat"
-                  result: 
-                    type: string
-                    example: "ongoing"
-  
-  /matchs/: 
-    post: 
-      tags: [Matchs]
-      summary: Used to Schedule a match
-      requestBody: 
-          description: Matchs which are Scheduled 
+          description: Player not found 
           content:
             application/json:
               schema:

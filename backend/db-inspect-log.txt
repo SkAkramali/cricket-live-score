@@ -1,0 +1,32 @@
+=== TABLES ===
+akram
+balls
+copy_scorecards
+copy_teams
+course
+innings
+matches
+player1
+players
+scorecards
+student
+student1
+teams
+users
+
+=== FOREIGN KEYS on each table ===
+balls -> innings [balls_ibfk_1]
+balls -> players [balls_ibfk_2]
+balls -> players [balls_ibfk_3]
+balls -> players [balls_ibfk_4]
+course -> student [course_ibfk_1]
+innings -> matches [innings_ibfk_1]
+innings -> teams [innings_ibfk_2]
+innings -> teams [innings_ibfk_3]
+matches -> teams [matches_ibfk_1]
+matches -> teams [matches_ibfk_2]
+matches -> teams [matches_ibfk_3]
+players -> teams [players_ibfk_1]
+scorecards -> matches [scorecards_ibfk_1]
+scorecards -> players [scorecards_ibfk_2]
+Done.

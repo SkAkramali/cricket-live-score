@@ -1,70 +1,197 @@
-// ---------------- Imports ----------------
-const express = require("express");
-const cors = require("cors");
-const cookieSession = require("cookie-session");
+// ============================================
+// CRICKET LIVE SCORE - BACKEND SERVER
+// Production-Ready Express + Socket.io Server
+// ============================================
 
+// ---------------- Imports ----------------
+require('dotenv').config();
+const express = require("express");
+const http = require("http");
+const cors = require("cors");
+const helmet = require("helmet");
+const compression = require("compression");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+
+// Initialize Express app
 const app = express();
+const server = http.createServer(app);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ---------------- Initialize Socket.io ----------------
+const { initializeSocket } = require("./config/socket");
+const io = initializeSocket(server);
 
+// ---------------- Initialize Redis (optional) ----------------
+const { initializeRedis } = require("./config/redis");
+initializeRedis().catch(err => {
+  console.warn('Redis initialization failed. Caching disabled:', err.message);
+});
+
+// ---------------- Security Middleware ----------------
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for Swagger UI
+}));
+
+// ---------------- Rate Limiting ----------------
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting to all API routes
+app.use('/api/', limiter);
+
+// ---------------- General Middleware ----------------
+app.use(compression()); // Compress responses
+app.use(morgan('combined')); // Logging
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ---------------- CORS Configuration ----------------
 app.use(
   cors({
-    origin: "http://localhost:5173", 
-    credentials: true,              
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
 
-app.use(
-  cookieSession({
-    name: "session",
-    keys: ["key1", "key2", "key3"],
-    maxAge: 24 * 60 * 60 * 1000, 
-    secure: false,               
-    httpOnly: true,
-    sameSite: "lax",
-  })
-);
+// ---------------- Import Error Handlers ----------------
+const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
-const userRouter = require("./routes/teams");
-const loginInfo = require("./routes/aouth");
-const player = require("./routes/players");
-const matchs = require("./routes/matchs");
-const innings = require('./routes/innings');
+// ---------------- Import Routes ----------------
+const authRouter = require("./routes/aouth");
+const teamsRouter = require("./routes/teams");
+const playersRouter = require("./routes/players");
+const matchsRouter = require("./routes/matchs");
+const inningsRouter = require('./routes/innings');
+const scoringRouter = require('./routes/scoring');
+const analyticsRouter = require('./routes/analytics');
+const tournamentsRouter = require('./routes/tournaments');
 
-app.use("/inngings", innings);
-app.use("/teams", userRouter);
-app.use("/aouth", loginInfo);
-app.use("/player", player);
-app.use("/matchs", matchs);
+// ---------------- Route Mounting ----------------
+app.use("/api/auth", authRouter);
+app.use("/api/teams", teamsRouter);
+app.use("/api/players", playersRouter);
+app.use("/api/matches", matchsRouter);
+app.use("/api/innings", inningsRouter);
+app.use("/api/scoring", scoringRouter);
+app.use("/api/analytics", analyticsRouter);
+app.use("/api/tournaments", tournamentsRouter);
 
+// ---------------- Swagger API Documentation ----------------
 const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "LIVE CRICKET SCORE API'S",
+      title: "Cricket Live Score API",
       version: "1.0.0",
-      description: "APIs for IPL teams, players, and authentication",
+      description: "Production-ready API for live cricket scoring system with real-time updates via WebSocket",
+      contact: {
+        name: "API Support"
+      },
     },
+    servers: [
+      {
+        url: `http://localhost:${process.env.PORT || 5000}`,
+        description: "Development server"
+      }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT"
+        }
+      }
+    },
+    security: [
+      {
+        bearerAuth: []
+      }
+    ]
   },
-  apis: ["./apiDoc.yaml"],
+  apis: ["./routes/*.js", "./apiDoc.yaml"],
 };
 
 const specs = swaggerJsdoc(options);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
-app.get("/test-session", (req, res) => {
-  req.session.count = (req.session.count || 0) + 1;
-  res.json({
-    message: "Session is working!",
-    count: req.session.count,
-    session: req.session,
+// ---------------- Health Check Route ----------------
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
 });
 
-app.listen(5000, () => {
-  console.log("Server started on port 5000");
-  console.log("Swagger UI: http://localhost:5000/api-docs");
+// ---------------- Root Route ----------------
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Cricket Live Score API",
+    version: "1.0.0",
+    documentation: "/api-docs",
+    endpoints: {
+      auth: "/api/auth",
+      matches: "/api/matches",
+      scoring: "/api/scoring",
+      analytics: "/api/analytics",
+      teams: "/api/teams",
+      players: "/api/players"
+    }
+  });
 });
+
+// ---------------- 404 Handler ----------------
+app.use(notFoundHandler);
+
+// ---------------- Error Handler (must be last) ----------------
+app.use(errorHandler);
+
+// ---------------- Start Server ----------------
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║       🏏 CRICKET LIVE SCORE API - SERVER STARTED          ║
+║                                                           ║
+║  Server running on: http://localhost:${PORT}                ║
+║  Swagger Docs:      http://localhost:${PORT}/api-docs      ║
+║  WebSocket:         Ready for connections                 ║
+║                                                           ║
+║  Environment:       ${process.env.NODE_ENV || 'development'}                       ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+  `);
+});
+
+// ---------------- Graceful Shutdown ----------------
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+module.exports = { app, server, io };

@@ -1,0 +1,32 @@
+Connecting to MySQL...
+Host: localhost | User: root | DB: cricket
+Connected! Creating database "cricket" if not exists...
+Reading schema.sql...
+Schema file size: 20121 bytes, running...
+[ERROR] Failed to add the foreign key constraint. Missing column 'user_id' for constraint 'tournaments_ibfk_1' in the referenced table 'users'
+Code: ER_FK_NO_COLUMN_PARENT
+sqlState: HY000
+SQL snippet: -- ============================================
+-- CRICKET LIVE SCORE - DATABASE SCHEMA
+-- Production-Ready Schema for Gully Cricket
+-- Enhanced with Tournament Management & Analytics
+-- ============================================
+
+-- Drop existing tables if they exist (for clean migration)
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- ============================================
+-- USERS TABLE
+-- ======
+Done.
