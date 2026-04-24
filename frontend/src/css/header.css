@@ -1,96 +1,230 @@
-.App-header{
+/* Header Styles */
+.App-header {
   display: flex;
   justify-content: space-between;
-  position: absolute;
-  top:0px;
-  left: 0px;
-  right: 0px;
-  background:#e9e9eb ;
-  /* color:white; */
-}
-.logo{
-  font-size: larger;
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-left: 20px;
-}
-.navContainer{
-  padding-right: 15px;
-  display:flex;
   align-items: center;
-  justify-content: space-between;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 5%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
 }
-.navigation{
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  margin: 0;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navigation {
   text-decoration: none;
-  font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-  padding:5px;
-  margin-left: 10px;
-  font-size: 1.3em;
-  color: black;
-  border-radius: 10px;
+  font-family: inherit;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #36454f;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-.navigation:hover{
-  background-color: white;
-  transition: all 0.5s;
+.navigation::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: transform 0.3s ease;
 }
 
-.profile{
-  width:50px;
-  height:50px;
+.navigation:hover {
+  color: #667eea;
+}
+
+.navigation:hover::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.navigation.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.profile {
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   cursor: pointer;
+  border: 3px solid #667eea;
+  transition: all 0.3s ease;
+  object-fit: cover;
 }
 
-.popupContainer{
+.profile:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Popup Styles */
+.popupContainer {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
 }
 
-.popup{
-  position: absolute;
-  top:30px;
-  right:500px;
-  width:400px;
-  height:190px;
-  background-color: white;
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-  border-radius: 10px;
+.popup {
+  background: white;
+  width: 90%;
+  max-width: 420px;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  animation: slideUp 0.3s ease;
 }
 
-.cancelLogout{
-  margin-top: 10px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background: rgb(123, 243, 123);
-  color: white;
+.popup p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #36454f;
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
-.logout{
-  padding: 10px 20px;
-  border: none;
-  background-color: #f44336;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.popupButtons{
+.popupButtons {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 20px;
+  gap: 1rem;
+  width: 100%;
+}
+
+.logout,
+.cancelLogout {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.logout {
+  background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.logout:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+}
+
+.cancelLogout {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+}
+
+.cancelLogout:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .App-header {
+    padding: 1rem 4%;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+  }
+
+  .navigation {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .profile {
+    width: 40px;
+    height: 40px;
+  }
+
+  .popup {
+    padding: 2rem;
+  }
+
+  .popupButtons {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .navContainer {
+    gap: 0.5rem;
+  }
+
+  .navigation {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
 }

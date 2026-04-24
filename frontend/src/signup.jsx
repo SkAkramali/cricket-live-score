@@ -1,49 +1,247 @@
 import { useState } from "react";
-import "./css/signin.css"
-const From = () => {
-  const [userName, setName]= useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const changeName= (e) => {
-    setName(e.target.value);
-    console.log(e.target.value);
-  }
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+import "./css/signin.css";
 
-  const changePassword= (e) => {
-    setPassword(e.target.value);
-  }
+const Form = () => {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
 
-  const changeEmail = (e) => {
-    setEmail(e.target.value);
-    console.log(e.target.value);  
-  }
+  const [formData, setFormData] = useState({
+    userName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async(e) => {
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Username validation
+    if (!formData.userName.trim()) {
+      newErrors.userName = 'Name is required';
+    } else if (formData.userName.trim().length < 2) {
+      newErrors.userName = 'Name must be at least 2 characters';
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase and lowercase letters';
+    }
+
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await fetch('http://localhost:5000/aouth/signup/', {
-      method: 'POST',
-      headers: {  
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({userName, email, password}) 
-    }); 
-    const data = await result.json();
-    console.log(data);
-  }
 
- return(
-  <form onSubmit={handleSubmit} className="form">
-    <h1>SignUP</h1>
-    <input type="text" placeholder="Name" className="userDeatils" onInput={changeName} required/>
-    <input type="text" placeholder="Email"  onInput={changeEmail} className="userDeatils"required/>
-    <input type="password" placeholder="Password" onInput={changePassword} className="userDeatils" required/>
-    <button type="submit">Submit</button>
-  </form>
- )
-}
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call signup from AuthContext which will auto-login
+      const result = await signup({
+        username: formData.userName,  // Backend expects 'username' (lowercase)
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (result.success) {
+        // Auto-login successful, navigate to dashboard
+        navigate("/dashboard");
+      } else {
+        setErrors({ submit: result.error || "Signup failed. Please try again." });
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      setErrors({ submit: "Something went wrong. Please try again later." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1>Create Account</h1>
+          <p>Sign up to get started with your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          {errors.submit && (
+            <div className="error-banner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {errors.submit}
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="userName">Full Name</label>
+            <input
+              type="text"
+              id="userName"
+              name="userName"
+              placeholder="John Doe"
+              value={formData.userName}
+              onChange={handleChange}
+              className={errors.userName ? 'error' : ''}
+              disabled={loading}
+            />
+            {errors.userName && <span className="error-message">{errors.userName}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="you@example.com"
+              value={formData.email}
+              onChange={handleChange}
+              className={errors.email ? 'error' : ''}
+              disabled={loading}
+            />
+            {errors.email && <span className="error-message">{errors.email}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                className={errors.password ? 'error' : ''}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex="-1"
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.password && <span className="error-message">{errors.password}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <div className="password-input-wrapper">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={errors.confirmPassword ? 'error' : ''}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                tabIndex="-1"
+              >
+                {showConfirmPassword ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+          </div>
+
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                Creating account...
+              </>
+            ) : (
+              'Sign Up'
+            )}
+          </button>
+
+          <div className="divider">
+            <span>or</span>
+          </div>
+
+          <p className="auth-footer">
+            Already have an account? <Link to="/signin">Sign in</Link>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const SignUp = () => {
- return(
-   <From></From>
- )
-}
+  return <Form />;
+};
+
 export default SignUp;

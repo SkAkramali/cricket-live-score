@@ -8,14 +8,13 @@ import { useNavigate } from "react-router-dom";
 // }
 const Popup = ({handlePopup})=> {
     const navigate = useNavigate();
-    const handleLogout = async () => {
-        const res = await fetch("http://localhost:5000/aouth/logout");
-        if(res.ok){
-            console.log(res);
-            navigate("/");
-        } else{
-            console.log("logouted");
-        }
+    const handleLogout = () => {
+        // JWT logout is handled client-side by removing tokens
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        // Force page reload to reset auth state
+        window.location.href = '/';
     }
     return(
         <div className="popupContainer">
@@ -38,9 +37,21 @@ export const Header = ({isSignedIn}) => {
         <header className="App-header">
             <p className="logo">Live Score</p>
             <div className="navContainer">
-              {isSignedIn?null:<NavLink to="/signin" className="navigation">Signin</NavLink>}
-              {isSignedIn?null:<NavLink to="/signup" className="navigation">Signup</NavLink>}
-              {isSignedIn?<p onClick={handlePopup}><img  className="profile" src="./profile.png" /></p>:null}   
+              {isSignedIn ? (
+                <>
+                  <NavLink to="/dashboard" className="navigation" style={{ marginRight: '15px', color: 'white', textDecoration: 'none' }}>Dashboard</NavLink>
+                  <NavLink to="/tournaments" className="navigation" style={{ marginRight: '15px', color: 'white', textDecoration: 'none' }}>Tournaments</NavLink>
+                  <NavLink to="/teams" className="navigation" style={{ marginRight: '15px', color: 'white', textDecoration: 'none' }}>Teams & Players</NavLink>
+                  <NavLink to="/live-scoring" className="navigation" style={{ marginRight: '15px', color: 'white', textDecoration: 'none' }}>Live Scoring</NavLink>
+                  <NavLink to="/scoreboard" className="navigation" style={{ marginRight: '15px', color: 'white', textDecoration: 'none' }}>Scoreboard</NavLink>
+                  <p onClick={handlePopup} style={{ cursor: 'pointer', margin: 0 }}><img className="profile" src="./profile.png" alt="Profile" style={{ width: '30px', height: '30px', borderRadius: '50%' }} /></p>
+                </>
+              ) : (
+                <>
+                  <NavLink to="/signin" className="navigation">Signin</NavLink>
+                  <NavLink to="/signup" className="navigation">Signup</NavLink>
+                </>
+              )}
             </div>
             {popupVisible?<Popup handlePopup={handlePopup}/>:null}
         </header>

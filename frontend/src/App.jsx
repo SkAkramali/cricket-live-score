@@ -1,65 +1,83 @@
-import './App.css'
-import Sigin from "./sigin";
-import { Header } from './header';
+import { Route, Routes, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import Layout from './components/Layout';
 import { LandingPage } from './landingPage';
-import { useEffect, useState } from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
-import { Dashboard } from './dashboard';
+import Sigin from './sigin';
 import SignUp from './signup';
+import { Dashboard } from './dashboard';
+import { Tournaments } from './pages/Tournaments';
+import { TeamsPlayers } from './pages/TeamsPlayers';
+import { LiveScoring } from './pages/LiveScoring';
+import { Scoreboard } from './pages/Scoreboard';
+import './css/app.css';
 
-function App() {
-  const [isSignedIn, setIsSignedIn] = useState(null);
+/* ── Page meta ──────────────────────────────────────────────── */
+const PAGE_META = {
+  '/dashboard':    { title: 'Dashboard',        subtitle: "Welcome back — here's your overview" },
+  '/tournaments':  { title: 'Tournaments',       subtitle: 'Manage and join cricket tournaments' },
+  '/teams':        { title: 'Teams & Players',   subtitle: 'Roster and player management' },
+  '/live-scoring': { title: 'Live Scoring',      subtitle: 'Record ball-by-ball deliveries' },
+  '/scoreboard':   { title: 'Scoreboard',        subtitle: 'Full match scorecards & stats' },
+};
 
-  useEffect(() => {
-    const checkLogin = async () => {
-      const res = await fetch("http://localhost:5000/aouth/issignined", {
-        credentials: "include"
-      });
-      const data = await res.json();
-      setIsSignedIn(data.islogined);
-    };
-
-    checkLogin();
-  }, []);
-
-  if (isSignedIn === null) {
-    return <div>Loading...</div>;
-  }
-
+/* ── Loading spinner ────────────────────────────────────────── */
+function LoadingScreen() {
   return (
-    <>
-      {/* Header is ALWAYS visible */}
-      <Header isSignedIn={isSignedIn} />
-
-      {/* Routes below header */}
-      <Routes>
-
-        {/* NOT LOGGED IN ROUTES */}
-        {!isSignedIn && (
-          <>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/signin" element={<Sigin onLoginSuccess={() => setIsSignedIn(true)} />} />
-            <Route path="/signup" element={<SignUp />} />
-            {/* Redirect dashboard to signin */}
-            <Route path="/dashboard" element={<Navigate to="/signin" />} />
-          </>
-        )}
-
-        {/* LOGGED IN ROUTES */}
-        {isSignedIn && (
-          <>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            {/* Prevent user from seeing signin again */}
-            <Route path="/signin" element={<Navigate to="/" />} />
-            <Route path="/signup" element={<Navigate to="/" />} />
-          </>
-        )}
-
-      </Routes>
-    </>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f1f5f9' }}>
+      <div className="spinner" />
+    </div>
   );
 }
 
-export default App;
+/* ── Private route guard ─────────────────────────────────────
+   Uses <Outlet /> — the ONLY correct React Router v6 pattern.
+   Conditional fragment rendering inside <Routes> silently
+   drops nested routes, which was causing LiveScoring/Scoreboard
+   to never register.
+────────────────────────────────────────────────────────────── */
+function PrivateRoute() {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/signin" replace />;
+}
 
+/* ── Public-only route (redirect authed users away) ─────────── */
+function PublicRoute() {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  return !isAuthenticated ? <Outlet /> : <Navigate to="/dashboard" replace />;
+}
+
+/* ── Wraps every protected page in the sidebar Layout ────────── */
+function ProtectedPage({ path, children }) {
+  const { title, subtitle } = PAGE_META[path] || {};
+  return <Layout title={title} subtitle={subtitle}>{children}</Layout>;
+}
+
+/* ── Root app ───────────────────────────────────────────────── */
+export default function App() {
+  return (
+    <Routes>
+      {/* Landing page — accessible to everyone */}
+      <Route path="/" element={<LandingPage />} />
+
+      {/* Public-only routes (redirect to dashboard if already logged in) */}
+      <Route element={<PublicRoute />}>
+        <Route path="/signin"  element={<Sigin />} />
+        <Route path="/signup"  element={<SignUp />} />
+      </Route>
+
+      {/* Protected routes — all rendered inside the sidebar Layout */}
+      <Route element={<PrivateRoute />}>
+        <Route path="/dashboard"    element={<ProtectedPage path="/dashboard">   <Dashboard />   </ProtectedPage>} />
+        <Route path="/tournaments"  element={<ProtectedPage path="/tournaments"> <Tournaments /> </ProtectedPage>} />
+        <Route path="/teams"        element={<ProtectedPage path="/teams">       <TeamsPlayers /></ProtectedPage>} />
+        <Route path="/live-scoring" element={<ProtectedPage path="/live-scoring"><LiveScoring /> </ProtectedPage>} />
+        <Route path="/scoreboard"   element={<ProtectedPage path="/scoreboard">  <Scoreboard />  </ProtectedPage>} />
+      </Route>
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
